@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{% static 'sitefront/css/site.css' %}">
   </head>
   <body id="app">
-    <h1 class="django">{% verbatim %} {{ title }} {% endverbatim %}</h1>
-    <script src="{% static 'sitefront/js/app.js' %}" charset="utf-8"></script>
+    <router-view></router-view>
+    <script src="{% static 'sitefront/js/app.bundled.js' %}" charset="utf-8"></script>
   </body>
 </html>

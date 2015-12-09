@@ -1,6 +1,9 @@
 var gulp = require('gulp');
 var stylus = require('gulp-stylus');
-var browserify = require('gulp-browserify');
+var browserify = require('browserify');
+var vueify = require('vueify');
+var source = require('vinyl-source-stream');
+
 
 gulp.task('stylus', function () {
   gulp.src('./resources/stylus/site.styl')
@@ -9,12 +12,11 @@ gulp.task('stylus', function () {
 });
 
 gulp.task('script', function() {
-	// Single entry point to browserify
-	gulp.src('./resources/js/app.js')
-		.pipe(browserify({
-		  insertGlobals : true
-		}))
-		.pipe(gulp.dest('./sitefront/static/sitefront/js'))
+  browserify('./resources/js/app.js')
+  .transform(vueify)
+  .bundle()
+  .pipe(source('app.bundled.js'))
+  .pipe(gulp.dest('./sitefront/static/sitefront/js'));
 });
 
 gulp.task('watch', function() {
