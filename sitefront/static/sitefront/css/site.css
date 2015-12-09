@@ -1,0 +1,31 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 300;
+  height: 100%;
+  width: 100%;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 200;
+}
+.django {
+  letter-spacing: 2rem;
+  margin-top: -1rem;
+  color: #9cf;
+  font-size: 8rem;
+  text-transform: uppercase;
+}
