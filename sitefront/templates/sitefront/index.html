@@ -8,7 +8,23 @@
     <link rel="stylesheet" href="{% static 'sitefront/css/site.css' %}">
   </head>
   <body id="app">
-    <router-view></router-view>
+    <form-overlay :form-overlay.sync="formOverlay"
+                  :jwt.sync="jwt"
+                  v-if="formOverlay"
+                  transition="fade-form">
+    </form-overlay>
+    <header :class="{header_home: headerState}">
+      <a v-link="{path:'/'}"><h1>BetLouco</h1></a>
+      <ul>
+        <li><a v-link="{path:'/trending'}">Mercados</a></li>
+        <li><a v-link="{path:'/faq'}">FAQ</a></li>
+        <li v-if="!jwt"><a @click="formOverlay = 'register'">Cadastro</a></li>
+        <li v-if="!jwt" class="login_link"><a @click="formOverlay = 'login'">Entrar</a></li>
+        <li v-if="jwt" class="login_link"><a href="#">Meu Perfil</a></li>
+        <li v-if="jwt"><a @click="logout">Sair</a></li>
+      </ul>
+    </header>
+    <router-view :search-bet.sync="searchBet"></router-view>
     <script src="{% static 'sitefront/js/app.bundled.js' %}" charset="utf-8"></script>
   </body>
 </html>

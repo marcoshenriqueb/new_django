@@ -13047,33 +13047,73 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = Vue;
 }).call(this,require('_process'))
 },{"_process":1}],13:[function(require,module,exports){
-var inserted = exports.cache = {}
-
-exports.insert = function (css) {
-  if (inserted[css]) return
-  inserted[css] = true
-
-  var elem = document.createElement('style')
-  elem.setAttribute('type', 'text/css')
-
-  if ('textContent' in elem) {
-    elem.textContent = css
-  } else {
-    elem.styleSheet.cssText = css
-  }
-
-  document.getElementsByTagName('head')[0].appendChild(elem)
-  return elem
-}
-
-},{}],14:[function(require,module,exports){
 var Vue = require('vue');
 var VueRouter = require('vue-router');
 var VueResource = require('vue-resource');
+
 Vue.use(VueRouter);
 Vue.use(VueResource);
 
-var app = Vue.extend ({});
+Vue.config.debug = true;
+// Vue.http.headers.common['X-CSRF-TOKEN'] = document.getElementById('token').getAttribute('value');
+
+var app = Vue.extend ({
+
+  data: function(){
+    return{
+      header_home: '',
+      searchBet: '',
+      formOverlay: false,
+      jwt: false
+    }
+  },
+
+  computed: {
+    headerState: function(){
+      if (this.searchBet) {
+        return false;
+      }else if (this.$route.fullPath == '/') {
+        return true;
+      }else {
+        return false;
+      }
+    }
+  },
+
+  ready: function(){
+    // var jwt = document.getElementById('jwt');
+    // if (jwt != null) {
+    //   this.jwt = jwt.getAttribute('value');
+    //   this.$http.headers.common['Authorization'] = 'Bearer ' + jwt.getAttribute('value');
+    // }
+  },
+
+  methods: {
+    logout: function(){
+      this.$http.get('/auth/logout')
+        .success(function(data){
+          this.jwt = false;
+          delete this.$http.headers.common['Authorization'];
+        })
+        .error(function(data, status){
+          alert(status);
+        });
+    }
+  },
+
+  events: {
+    'header_home': function (msg) {
+      // `this` in event callbacks are automatically bound
+      // to the instance that registered it
+      this.header_home = msg;
+    }
+  },
+
+  components: {
+    'form-overlay': require('./components/local/forms/formOverlay.vue')
+  }
+  
+});
 
 var router = new VueRouter({
   history: true,
@@ -13081,39 +13121,280 @@ var router = new VueRouter({
 });
 
 router.map({
-  '/': {
-    component: require('./components/routed/home.vue')
-  }
+    '/' :{
+      component: require('./components/routed/home.vue')
+    },
+    '/faq': {
+      component: require('./components/routed/faq.vue')
+    },
+    '/mercados': {
+      component: require('./components/routed/markets.vue')
+    }
 });
 
 router.start(app, '#app');
 
-},{"./components/routed/home.vue":15,"vue":12,"vue-resource":4,"vue-router":11}],15:[function(require,module,exports){
-var __vueify_style__ = require("vueify-insert-css").insert(".django {\n  letter-spacing: 2rem;\n  margin-top: -1rem;\n  color: #9cf;\n  font-size: 8rem;\n  text-transform: uppercase;\n}\n")
+},{"./components/local/forms/formOverlay.vue":15,"./components/routed/faq.vue":18,"./components/routed/home.vue":19,"./components/routed/markets.vue":20,"vue":12,"vue-resource":4,"vue-router":11}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = {
   data: function data() {
     return {
-      msg: 'django'
+      title: '',
+      titles: ['A dilma vai sofrer impeachment em 2015?', 'O vasco será rebaixado nesse domingo?']
     };
+  },
+
+  props: ['searchBet', 'betSearchResults'],
+
+  ready: function ready() {
+    var i = 0;
+    this.title = this.titles[0];
+    setInterval((function () {
+      i++;
+      var n = i % 2;
+      this.title = this.titles[n];
+    }).bind(this), 5000);
+  },
+
+  methods: {
+    ajaxSearch: function ajaxSearch() {
+      if (this.searchBet.trim().length > 3) {
+        this.$http.get('/ajax/table/search/' + this.searchBet).success(function (data) {
+          this.betSearchResults = data;
+        });
+      } else {
+        this.betSearchResults = {};
+      }
+    }
   }
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <h1 class=\"django\">{{msg}}</h1>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"search-container\" :class=\"{'search-container_filled': searchBet}\">\n    <h1>{{title}}</h1>\n    <input type=\"text\" class=\"search-container--search\" placeholder=\"Procure por apostas aqui!\" v-model=\"searchBet\" @keyup=\"ajaxSearch\">\n  </div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
-  var id = "/var/www/python/projectB/resources/js/components/routed/home.vue"
-  module.hot.dispose(function () {
-    require("vueify-insert-css").cache[".django {\n  letter-spacing: 2rem;\n  margin-top: -1rem;\n  color: #9cf;\n  font-size: 8rem;\n  text-transform: uppercase;\n}\n"] = false
-    document.head.removeChild(__vueify_style__)
-  })
+  var id = "/var/www/python/projectB/resources/js/components/local/bet-search.vue"
   if (!module.hot.data) {
     hotAPI.createRecord(id, module.exports)
   } else {
     hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
   }
 })()}
-},{"vue":12,"vue-hot-reload-api":2,"vueify-insert-css":13}]},{},[14]);
+},{"vue":12,"vue-hot-reload-api":2}],15:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  props: ['formOverlay', 'jwt'],
+
+  methods: {
+    exit: function exit() {
+      this.formOverlay = false;
+    },
+    stopExit: function stopExit(e) {
+      e.stopPropagation();
+    }
+  },
+
+  events: {
+    'success': 'exit',
+    'register': function register() {
+      this.formOverlay = 'login';
+    },
+    'login': function login() {
+      this.formOverlay = 'register';
+    },
+    'setJWT': function setJWT(data) {
+      this.jwt = data;
+      this.$http.headers.common['Authorization'] = 'Bearer ' + data;
+    }
+  },
+
+  components: {
+    'login': require('./login.vue'),
+    'register': require('./register.vue')
+  }
+};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_container\" @click=\"exit\">\n    <div class=\"form-overlay_content\" @click=\"stopExit\">\n      <login v-if=\"formOverlay == 'login'\"></login>\n      <register v-if=\"formOverlay == 'register'\"></register>\n    </div>\n  </div>\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/local/forms/formOverlay.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"./login.vue":16,"./register.vue":17,"vue":12,"vue-hot-reload-api":2}],16:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+
+  data: function data() {
+    return {
+      email: '',
+      password: '',
+      error: {}
+    };
+  },
+
+  methods: {
+    validateAndLogin: function validateAndLogin() {
+      var data = {
+        email: this.email,
+        password: this.password
+      };
+      this.$http.post('/auth/login', data).success(function (data) {
+        this.email = '';
+        this.password = '';
+        this.$dispatch('success');
+        this.$dispatch('setJWT', data);
+      }).error(function (data, status) {
+        if (status == 401) {
+          this.error = data;
+        }
+      });
+    },
+    goLogin: function goLogin() {
+      this.$dispatch('login');
+    }
+  }
+};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Login</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"email\">Email:</label>\n    <input type=\"text\" name=\"email\" v-model=\"email\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <button @click=\"validateAndLogin\" name=\"button\">Entrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e}}</span>\n\n    <hr>\n\n    <span>Não tem uma conta ainda? <a @click=\"goLogin\">Cadastre-se!</a></span>\n  </div>\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/local/forms/login.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"vue":12,"vue-hot-reload-api":2}],17:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+
+  data: function data() {
+    return {
+      name: '',
+      email: '',
+      password: '',
+      password_confirmation: '',
+      error: {}
+    };
+  },
+
+  methods: {
+    validateAndRegister: function validateAndRegister() {
+      var data = {
+        name: this.name,
+        email: this.email,
+        password: this.password,
+        password_confirmation: this.password_confirmation
+      };
+      this.$http.post('/auth/register', data).success(function (data) {
+        this.name = '';
+        this.email = '';
+        this.password = '';
+        this.password_confirmation = '';
+        this.$dispatch('success');
+      }).error(function (data, status) {
+        if (status == 422) {
+          this.error = data;
+        }
+      });
+    },
+    goRegister: function goRegister() {
+      this.$dispatch('register');
+    }
+  }
+};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Cadastro</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"email\">Nome Completo:</label>\n    <input type=\"text\" name=\"name\" v-model=\"name\">\n\n    <label for=\"email\">Email:</label>\n    <input type=\"email\" name=\"email\" v-model=\"email\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <label for=\"password\">Confirme a senha:</label>\n    <input type=\"password\" name=\"password_confirmation\" v-model=\"password_confirmation\">\n\n    <button @click=\"validateAndRegister\" name=\"button\">Cadastrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e[0]}}</span>\n\n    <hr>\n\n    <span>Já é cadastrado? <a @click=\"goRegister\">Entre aqui!</a></span>\n  </div>\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/local/forms/register.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"vue":12,"vue-hot-reload-api":2}],18:[function(require,module,exports){
+"use strict";
+
+module.exports = {};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"faq\">\n    <div class=\"faq_header\">\n      <h2>Perguntas frequentes</h2>\n    </div>\n\n    <p class=\"faq_question\">\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor?\n    </p>\n    <p>\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n    </p>\n    <p class=\"faq_question\">\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor?\n    </p>\n    <p>\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n    </p>\n    <p class=\"faq_question\">\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor?\n    </p>\n    <p>\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n    </p>\n    <p class=\"faq_question\">\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor?\n    </p>\n    <p>\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n    </p>\n    <p class=\"faq_question\">\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor?\n    </p>\n    <p>\n      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n    </p>\n  </div>\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/routed/faq.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"vue":12,"vue-hot-reload-api":2}],19:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  data: function data() {
+    return {
+      betSearchResults: {}
+    };
+  },
+
+  props: ['searchBet'],
+
+  ready: function ready() {
+    this.$dispatch('header_home', 'header_home');
+  },
+
+  components: {
+    'bet-search': require('./../local/bet-search.vue')
+  }
+};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"cover\" v-if=\"!searchBet\" transition=\"fade-out\">\n    <picture>\n      <img src=\"/static/sitefront/images/manchester-sm.jpg\" srcset=\"/static/sitefront/images/manchester-sm.jpg 800w, /static/sitefront/images/manchester-md.jpg 1200w\">\n    </picture>\n  </div>\n\n  <bet-search :bet-search-results.sync=\"betSearchResults\" :search-bet.sync=\"searchBet\"></bet-search>\n\n  <div class=\"bet-search-results\" v-if=\"searchBet\">\n    <div class=\"bet-search-results__item\" v-for=\"r in betSearchResults\">\n      <div class=\"bet-search-results__item_header\">\n        <h3>{{r.name}}</h3>\n      </div>\n      <span>{{r.description}}</span>\n      <div class=\"bet-search-results__item_footer\">\n        <span>Prazo: {{r.deadline}}</span>\n      </div>\n    </div>\n  </div>\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/routed/home.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"./../local/bet-search.vue":14,"vue":12,"vue-hot-reload-api":2}],20:[function(require,module,exports){
+"use strict";
+
+module.exports = {};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n\n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  var id = "/var/www/python/projectB/resources/js/components/routed/markets.vue"
+  if (!module.hot.data) {
+    hotAPI.createRecord(id, module.exports)
+  } else {
+    hotAPI.update(id, module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"vue":12,"vue-hot-reload-api":2}]},{},[13]);

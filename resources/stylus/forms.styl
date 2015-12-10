@@ -1,0 +1,58 @@
+input_background_color = #fff
+input_border_color = #D1D1D1
+
+input
+  height 38px
+  padding 6px 10px
+  background-color input_background_color
+  border 1px solid input_border_color
+  border-radius 4px
+  line-height normal
+  color inherit
+  font inherit
+
+  &:focus
+    outline-color primary_color
+
+button
+  height 38px
+  padding 6px 10px
+  background-color dark_gray_color
+  border-radius 4px
+  line-height normal
+  color light_color
+  cursor pointer
+  font-size 14px
+  font-weight 600
+  letter-spacing .1rem
+  text-transform uppercase
+  text-decoration none
+  border 1px solid dark_gray_color
+
+  &:hover, &active
+    background-color light_color
+    color dark_gray_color
+
+  &:focus
+    outline none
+
+button.primary
+  background-color primary_color
+  border 1px solid primary_color
+
+  &:hover, &active
+    background-color light_color
+    color primary_color
+
+button.secondary
+  background-color secondary_color
+  border 1px solid secondary_color
+
+  &:hover, &active
+    background-color light_color
+    color secondary_color
+
+a
+  text-decoration none
+  color primary_color
+  cursor pointer

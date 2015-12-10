@@ -1,0 +1,38 @@
+header_height = 60px
+
+header
+  padding 0 3%
+  width 100%
+  height header_height
+  background-color dark_gray_color
+  color light_color
+  position absolute
+  display flex
+  align-items center
+  justify-content space-between
+  transition all 0.3s ease-in-out
+
+  h1
+    color light_color
+    flex-basis 300px
+
+  ul
+    flex-basis 600px
+    display flex
+    justify-content flex-end
+    align-items center
+    height 60px
+
+  li
+    margin-left 30px
+    list-style-type none
+    padding 7.5px 0
+
+    &:hover
+      border-bottom 2px solid light_color
+
+  a
+    color light_color
+    text-transform uppercase
+    font-weight bold
+    text-decoration none

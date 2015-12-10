@@ -3,6 +3,10 @@ var stylus = require('gulp-stylus');
 var browserify = require('browserify');
 var vueify = require('vueify');
 var source = require('vinyl-source-stream');
+var imagemin = require('gulp-imagemin');
+var pngquant = require('imagemin-pngquant');
+var imageResize = require('gulp-image-resize');
+var rename = require('gulp-rename');
 
 
 gulp.task('stylus', function () {
@@ -20,6 +24,40 @@ gulp.task('script', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch('./resources/stylus/site.styl', ['stylus']);
-  gulp.watch('./resources/js/app.js', ['script']);
+  gulp.watch('./resources/stylus/**/*.styl', ['stylus']);
+  gulp.watch('./resources/js/**/*', ['script']);
+});
+
+gulp.task('image', function() {
+    return gulp.src('./resources/images/*.jpg')
+        .pipe(imageResize({
+            width : 1200,
+            crop : false,
+            upscale : false,
+            ImageMagick: true
+        }))
+        .pipe(imagemin({
+            progressive: true,
+            svgoPlugins: [{removeViewBox: false}],
+            use: [pngquant()]
+        }))
+        .pipe(rename({suffix: "-md"}))
+        .pipe(gulp.dest('./sitefront/static/sitefront/images'))
+        .pipe(imageResize({
+            width : 800,
+            crop : false,
+            upscale : false,
+            ImageMagick: true
+        }))
+        .pipe(imagemin({
+            progressive: true,
+            svgoPlugins: [{removeViewBox: false}],
+            use: [pngquant()]
+        }))
+        .pipe(rename(function (path) {
+            var l = path.basename.length - 3;
+            path.basename = path.basename.substr(0, l);
+            path.basename += "-sm";
+          }))
+        .pipe(gulp.dest('./sitefront/static/sitefront/images'));
 });
