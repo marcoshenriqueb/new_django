@@ -13055,7 +13055,8 @@ Vue.use(VueRouter);
 Vue.use(VueResource);
 
 Vue.config.debug = true;
-// Vue.http.headers.common['X-CSRF-TOKEN'] = document.getElementById('token').getAttribute('value');
+var csrf = document.getElementById('token').getAttribute('value');
+Vue.http.headers.common['X-CSRFToken'] = csrf;
 
 var app = Vue.extend ({
 
@@ -13112,7 +13113,7 @@ var app = Vue.extend ({
   components: {
     'form-overlay': require('./components/local/forms/formOverlay.vue')
   }
-  
+
 });
 
 var router = new VueRouter({

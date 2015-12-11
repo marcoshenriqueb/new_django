@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'sitefront.apps.SitefrontConfig',
     'user_profile.apps.UserProfileConfig',
+    'project_auth.apps.ProjectAuthConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -128,9 +129,8 @@ STATIC_URL = '/static/'
 
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    'DEFAULT_PERMISSION_CLASSES': (
+       'rest_framework.permissions.AllowAny',
+    ),
+    'PAGE_SIZE': 10
 }
