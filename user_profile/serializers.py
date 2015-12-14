@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserProfile
+from rest_framework.response import Response
+import string
+import random
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,17 +20,25 @@ class UserSerializer(serializers.ModelSerializer):
             last_name=validated_data['last_name'] if 'first_name' in validated_data else '',
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password'],
             is_active=False
         )
+        u.set_password(validated_data['password'])
         u.save()
+        random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(40))
         if 'profile' in validated_data:
             if 'picture' in validated_data['profile']:
                 p = UserProfile(
                     picture=validated_data['profile']['picture'],
+                    verified_token=random_str,
                     user=u
                 )
                 p.save()
+        else:
+            p = UserProfile(
+                verified_token=random_str,
+                user=u
+            )
+            p.save()
 
         return u
 

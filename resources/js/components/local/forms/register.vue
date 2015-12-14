@@ -5,8 +5,8 @@
     <hr>
   </div>
   <div class="form-overlay_content__body">
-    <label for="email">Nome Completo:</label>
-    <input type="text" name="name" v-model="name">
+    <label for="username">Nome de usuário:</label>
+    <input type="text" name="username" v-model="username">
 
     <label for="email">Email:</label>
     <input type="email" name="email" v-model="email">
@@ -32,7 +32,7 @@
 
     data: function(){
       return {
-        name: '',
+        username: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -43,21 +43,20 @@
     methods: {
       validateAndRegister: function(){
         var data = {
-          name: this.name,
+          username: this.username,
           email: this.email,
           password: this.password,
-          password_confirmation: this.password_confirmation
         };
-        this.$http.post('/auth/register', data)
+        this.$http.post('/api/users/', data)
           .success(function(data){
             this.name = '';
             this.email = '';
             this.password = '';
             this.password_confirmation = '';
-            this.$dispatch('success');
+            this.$dispatch('email_sent');
           })
           .error(function(data, status){
-            if (status == 422) {
+            if (status == 400) {
               this.error = data;
             }
           });

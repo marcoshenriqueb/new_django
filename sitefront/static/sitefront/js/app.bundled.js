@@ -13082,30 +13082,23 @@ var app = Vue.extend ({
   },
 
   ready: function(){
-    // var jwt = document.getElementById('jwt');
-    // if (jwt != null) {
-    //   this.jwt = jwt.getAttribute('value');
-    //   this.$http.headers.common['Authorization'] = 'Bearer ' + jwt.getAttribute('value');
-    // }
+    var cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    if (cookieValue != null) {
+      this.jwt = cookieValue;
+      this.$http.headers.common['Authorization'] = 'JWT ' + cookieValue;
+    }
   },
 
   methods: {
     logout: function(){
-      this.$http.get('/auth/logout')
-        .success(function(data){
-          this.jwt = false;
-          delete this.$http.headers.common['Authorization'];
-        })
-        .error(function(data, status){
-          alert(status);
-        });
+      this.jwt = false;
+      delete this.$http.headers.common['Authorization'];
+      document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
   },
 
   events: {
     'header_home': function (msg) {
-      // `this` in event callbacks are automatically bound
-      // to the instance that registered it
       this.header_home = msg;
     }
   },
@@ -13189,16 +13182,36 @@ if (module.hot) {(function () {  module.hot.accept()
 module.exports = {
   props: ['formOverlay', 'jwt'],
 
+  data: function data() {
+    return {
+      message: '',
+      subMessage: ''
+    };
+  },
+
   methods: {
     exit: function exit() {
       this.formOverlay = false;
     },
     stopExit: function stopExit(e) {
       e.stopPropagation();
+    },
+    emailWarning: function emailWarning() {
+      this.formOverlay = 'message';
+      this.message = 'Obrigado por se cadastrar!';
+      this.subMessage = 'Um email de confirmação foi enviado.';
+      setTimeout((function () {
+        this.formOverlay = false;
+        setTimeout((function () {
+          this.message = '';
+          this.subMessage = '';
+        }).bind(this), 4000);
+      }).bind(this), 2000);
     }
   },
 
   events: {
+    'email_sent': 'emailWarning',
     'success': 'exit',
     'register': function register() {
       this.formOverlay = 'login';
@@ -13207,8 +13220,11 @@ module.exports = {
       this.formOverlay = 'register';
     },
     'setJWT': function setJWT(data) {
-      this.jwt = data;
-      this.$http.headers.common['Authorization'] = 'Bearer ' + data;
+      this.jwt = data.token;
+      this.$http.headers.common['Authorization'] = 'JWT ' + data.token;
+      var now = new Date();
+      var d = now.setDate(now.getDate() + 14);
+      document.cookie = 'jwt=' + data.token + '; expires=' + d + '; path=/';
     }
   },
 
@@ -13218,7 +13234,7 @@ module.exports = {
   }
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_container\" @click=\"exit\">\n    <div class=\"form-overlay_content\" @click=\"stopExit\">\n      <login v-if=\"formOverlay == 'login'\"></login>\n      <register v-if=\"formOverlay == 'register'\"></register>\n    </div>\n  </div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_container\" @click=\"exit\">\n    <div class=\"form-overlay_content\" @click=\"stopExit\">\n      <login v-if=\"formOverlay == 'login'\"></login>\n      <register v-if=\"formOverlay == 'register'\"></register>\n      <div class=\"form-overlay_content__body\" v-if=\"formOverlay == 'message'\">\n        <h2 v-if=\"message\">{{message}}</h2>\n        <p v-if=\"subMessage\">\n          {{subMessage}}\n        </p>\n      </div>\n    </div>\n  </div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -13237,7 +13253,7 @@ module.exports = {
 
   data: function data() {
     return {
-      email: '',
+      username: '',
       password: '',
       error: {}
     };
@@ -13246,17 +13262,17 @@ module.exports = {
   methods: {
     validateAndLogin: function validateAndLogin() {
       var data = {
-        email: this.email,
+        username: this.username,
         password: this.password
       };
-      this.$http.post('/auth/login', data).success(function (data) {
+      this.$http.post('/api-token-auth/', data).success(function (data) {
         this.email = '';
         this.password = '';
         this.$dispatch('success');
         this.$dispatch('setJWT', data);
       }).error(function (data, status) {
-        if (status == 401) {
-          this.error = data;
+        if (status == 400) {
+          this.error = ['Credenciais inválidas'];
         }
       });
     },
@@ -13266,7 +13282,7 @@ module.exports = {
   }
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Login</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"email\">Email:</label>\n    <input type=\"text\" name=\"email\" v-model=\"email\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <button @click=\"validateAndLogin\" name=\"button\">Entrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e}}</span>\n\n    <hr>\n\n    <span>Não tem uma conta ainda? <a @click=\"goLogin\">Cadastre-se!</a></span>\n  </div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Login</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"username\">Usuário:</label>\n    <input type=\"text\" name=\"username\" v-model=\"username\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <button @click=\"validateAndLogin\" name=\"button\">Entrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e}}</span>\n\n    <hr>\n\n    <span>Não tem uma conta ainda? <a @click=\"goLogin\">Cadastre-se!</a></span>\n  </div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -13285,7 +13301,7 @@ module.exports = {
 
   data: function data() {
     return {
-      name: '',
+      username: '',
       email: '',
       password: '',
       password_confirmation: '',
@@ -13296,19 +13312,18 @@ module.exports = {
   methods: {
     validateAndRegister: function validateAndRegister() {
       var data = {
-        name: this.name,
+        username: this.username,
         email: this.email,
-        password: this.password,
-        password_confirmation: this.password_confirmation
+        password: this.password
       };
-      this.$http.post('/auth/register', data).success(function (data) {
+      this.$http.post('/api/users/', data).success(function (data) {
         this.name = '';
         this.email = '';
         this.password = '';
         this.password_confirmation = '';
-        this.$dispatch('success');
+        this.$dispatch('email_sent');
       }).error(function (data, status) {
-        if (status == 422) {
+        if (status == 400) {
           this.error = data;
         }
       });
@@ -13319,7 +13334,7 @@ module.exports = {
   }
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Cadastro</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"email\">Nome Completo:</label>\n    <input type=\"text\" name=\"name\" v-model=\"name\">\n\n    <label for=\"email\">Email:</label>\n    <input type=\"email\" name=\"email\" v-model=\"email\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <label for=\"password\">Confirme a senha:</label>\n    <input type=\"password\" name=\"password_confirmation\" v-model=\"password_confirmation\">\n\n    <button @click=\"validateAndRegister\" name=\"button\">Cadastrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e[0]}}</span>\n\n    <hr>\n\n    <span>Já é cadastrado? <a @click=\"goRegister\">Entre aqui!</a></span>\n  </div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n  <div class=\"form-overlay_content__header\">\n    <hr>\n    <h2>Cadastro</h2>\n    <hr>\n  </div>\n  <div class=\"form-overlay_content__body\">\n    <label for=\"username\">Nome de usuário:</label>\n    <input type=\"text\" name=\"username\" v-model=\"username\">\n\n    <label for=\"email\">Email:</label>\n    <input type=\"email\" name=\"email\" v-model=\"email\">\n\n    <label for=\"password\">Senha:</label>\n    <input type=\"password\" name=\"password\" v-model=\"password\">\n\n    <label for=\"password\">Confirme a senha:</label>\n    <input type=\"password\" name=\"password_confirmation\" v-model=\"password_confirmation\">\n\n    <button @click=\"validateAndRegister\" name=\"button\">Cadastrar</button>\n\n    <span class=\"error\" v-for=\"e in error\">{{e[0]}}</span>\n\n    <hr>\n\n    <span>Já é cadastrado? <a @click=\"goRegister\">Entre aqui!</a></span>\n  </div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)

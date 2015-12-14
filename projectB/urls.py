@@ -16,10 +16,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from rest_framework_jwt import views
 
 urlpatterns = [
     url(r'^', include('sitefront.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^api/users/', include('user_profile.urls')),
+    url(r'^api-token-auth/', views.obtain_jwt_token),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

@@ -33,30 +33,23 @@ var app = Vue.extend ({
   },
 
   ready: function(){
-    // var jwt = document.getElementById('jwt');
-    // if (jwt != null) {
-    //   this.jwt = jwt.getAttribute('value');
-    //   this.$http.headers.common['Authorization'] = 'Bearer ' + jwt.getAttribute('value');
-    // }
+    var cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    if (cookieValue != null) {
+      this.jwt = cookieValue;
+      this.$http.headers.common['Authorization'] = 'JWT ' + cookieValue;
+    }
   },
 
   methods: {
     logout: function(){
-      this.$http.get('/auth/logout')
-        .success(function(data){
-          this.jwt = false;
-          delete this.$http.headers.common['Authorization'];
-        })
-        .error(function(data, status){
-          alert(status);
-        });
+      this.jwt = false;
+      delete this.$http.headers.common['Authorization'];
+      document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
   },
 
   events: {
     'header_home': function (msg) {
-      // `this` in event callbacks are automatically bound
-      // to the instance that registered it
       this.header_home = msg;
     }
   },

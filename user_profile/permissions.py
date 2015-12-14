@@ -8,7 +8,10 @@ class IsAuthenticatedOrCreateOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
-            return False
+            if request.user.is_anonymous():
+                return False
+            else:
+                return True
 
         return True
 

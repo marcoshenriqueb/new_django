@@ -5,8 +5,8 @@
     <hr>
   </div>
   <div class="form-overlay_content__body">
-    <label for="email">Email:</label>
-    <input type="text" name="email" v-model="email">
+    <label for="username">Usuário:</label>
+    <input type="text" name="username" v-model="username">
 
     <label for="password">Senha:</label>
     <input type="password" name="password" v-model="password">
@@ -26,7 +26,7 @@
 
     data: function(){
       return{
-        email: '',
+        username: '',
         password: '',
         error: {}
       }
@@ -35,10 +35,10 @@
     methods: {
       validateAndLogin: function(){
         var data = {
-          email: this.email,
+          username: this.username,
           password: this.password
         };
-        this.$http.post('/auth/login', data)
+        this.$http.post('/api-token-auth/', data)
           .success(function(data){
             this.email = '';
             this.password = '';
@@ -46,8 +46,8 @@
             this.$dispatch('setJWT', data);
           })
           .error(function(data, status){
-            if (status == 401) {
-              this.error = data;
+            if (status == 400) {
+              this.error = ['Credenciais inválidas'];
             }
           });
       },
