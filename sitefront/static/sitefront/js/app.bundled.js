@@ -13083,7 +13083,7 @@ var app = Vue.extend ({
 
   ready: function(){
     var cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-    if (cookieValue != null) {
+    if (cookieValue != null && cookieValue.length > 10) {
       this.jwt = cookieValue;
       this.$http.headers.common['Authorization'] = 'JWT ' + cookieValue;
     }

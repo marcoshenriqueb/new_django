@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserProfile
 from rest_framework.response import Response
+from project_mailer.mailer import MailgunMailer
 import string
 import random
 
@@ -12,7 +13,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
         depth = 1
 
 class UserSerializer(serializers.ModelSerializer):
-    # profile = UserProfileSerializer()
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'username',
+            'password',
+            'email',
+            'is_superuser',
+            'last_login',
+            'is_active',
+            'date_joined'
+        )
+        depth = 1
+
 
     def create(self, validated_data):
         u = User(
@@ -40,20 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
             )
             p.save()
 
-        return u
+        m = MailgunMailer()
+        m.sendRegisterConfirmation([u.email,], p.verified_token)
 
-    class Meta:
-        model = User
-        fields = (
-            'id',
-            'first_name',
-            'last_name',
-            'username',
-            'password',
-            'email',
-            'is_superuser',
-            'last_login',
-            'is_active',
-            'date_joined'
-        )
-        depth = 1
+        return u

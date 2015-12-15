@@ -13,3 +13,6 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+def confirm_registration(request, verified_token):
+    pass
