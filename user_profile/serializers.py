@@ -6,14 +6,28 @@ from project_mailer.mailer import MailgunMailer
 import string
 import random
 
+class ConfirmRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'is_active')
+
+    def update(self, instance, validated_data):
+        instance.is_active = validated_data.get('is_active')
+        instance.save()
+        profile = instance.profile
+        profile.verified_token = validated_data.get('verified_token')
+        profile.save()
+
+        return instance
+
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('picture',)
+        fields = ('picture', 'verified_token')
         depth = 1
 
 class UserSerializer(serializers.ModelSerializer):
-
+    # profile = serializers.PrimaryKeyRelatedField(queryset=UserProfile.objects.all())
     class Meta:
         model = User
         fields = (
@@ -23,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
             'password',
             'email',
+            'profile',
             'is_superuser',
             'last_login',
             'is_active',
